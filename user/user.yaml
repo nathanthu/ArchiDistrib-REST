@@ -153,6 +153,33 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /users/{userid}/bookings:
+    get:
+      tags:
+        - dev
+      summary: Retrieve a user and its detailed bookings
+      description: Calls the Booking service (which calls the Movie service). The bookings list is empty if the user has no booking.
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "200":
+          description: User and its bookings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  bookings:
+                    $ref: "#/components/schemas/DatesDetails"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   parameters:
     UserId:
@@ -196,6 +223,37 @@ components:
         last_active:
           type: integer
           example: 1360031010
+
+    Movie:
+      type: object
+      description: Movie as returned by the Movie service
+      properties:
+        id:
+          type: string
+          example: "267eedb8-0f5d-42d5-8f43-72426b9fb3e6"
+        title:
+          type: string
+          example: Creed
+        rating:
+          type: number
+          example: 8.8
+        director:
+          type: string
+          example: Ryan Coogler
+
+    DatesDetails:
+      type: array
+      description: Booked dates with the details of each movie
+      items:
+        type: object
+        properties:
+          date:
+            type: string
+            example: "20151201"
+          movies:
+            type: array
+            items:
+              $ref: "#/components/schemas/Movie"
 
     Error:
       type: object

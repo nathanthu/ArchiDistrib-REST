@@ -8,6 +8,7 @@ PORT = 3201
 HOST = '0.0.0.0'
 
 # adresses des autres services appeles par Booking
+MOVIE_URL = "http://localhost:3200"
 SCHEDULE_URL = "http://localhost:3202"
 USER_URL = "http://localhost:3203"
 
@@ -51,6 +52,27 @@ def get_user_bookings(userid):
    if booking is None:
       return make_response(jsonify({"error": "no booking for this user"}), 404)
    return make_response(jsonify(booking), 200)
+
+# les reservations d'un utilisateur avec le detail de chaque film (appel a Movie)
+@app.route("/bookings/<userid>/details", methods=['GET'])
+def get_user_bookings_details(userid):
+   booking = find_booking(userid)
+   if booking is None:
+      return make_response(jsonify({"error": "no booking for this user"}), 404)
+
+   dates = []
+   for day in booking["dates"]:
+      movies = []
+      for movieid in day["movies"]:
+         res = requests.get(f"{MOVIE_URL}/movies/{movieid}")
+         if res.status_code == 200:
+            movies.append(res.json())
+         else:
+            # film supprime de Movie entre temps : on garde au moins l'id
+            movies.append({"id": movieid})
+      dates.append({"date": day["date"], "movies": movies})
+
+   return make_response(jsonify({"userid": userid, "dates": dates}), 200)
 
 # ajout d'une reservation, corps : {"date": "...", "movieid": "..."}
 @app.route("/bookings/<userid>", methods=['POST'])

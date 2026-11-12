@@ -81,6 +81,34 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /bookings/{userid}/details:
+    get:
+      tags:
+        - dev
+      summary: Retrieve the bookings of a user with the movie details
+      description: Same as /bookings/{userid}, but each movie ID is replaced by the movie returned by the Movie service.
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "200":
+          description: Detailed bookings of the user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userid:
+                    type: string
+                    example: chris_rivers
+                  dates:
+                    $ref: "#/components/schemas/DatesDetails"
+        "404":
+          description: No booking for this user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
     post:
       tags:
         - dev
@@ -199,6 +227,37 @@ components:
       required:
         - userid
         - dates
+
+    Movie:
+      type: object
+      description: Movie as returned by the Movie service
+      properties:
+        id:
+          type: string
+          example: "267eedb8-0f5d-42d5-8f43-72426b9fb3e6"
+        title:
+          type: string
+          example: Creed
+        rating:
+          type: number
+          example: 8.8
+        director:
+          type: string
+          example: Ryan Coogler
+
+    DatesDetails:
+      type: array
+      description: Booked dates with the details of each movie
+      items:
+        type: object
+        properties:
+          date:
+            type: string
+            example: "20151201"
+          movies:
+            type: array
+            items:
+              $ref: "#/components/schemas/Movie"
 
     Error:
       type: object

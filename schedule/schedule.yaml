@@ -118,6 +118,36 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /schedule/{date}/details:
+    get:
+      tags:
+        - dev
+      summary: Retrieve the movies shown on a date with their details
+      description: Each movie ID is replaced by the movie returned by the Movie service.
+      parameters:
+        - $ref: "#/components/parameters/Date"
+      responses:
+        "200":
+          description: Movies of the date with their details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  date:
+                    type: string
+                    example: "20151201"
+                  movies:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Movie"
+        "404":
+          description: Date not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   parameters:
     Date:
@@ -145,6 +175,23 @@ components:
       required:
         - date
         - movies
+
+    Movie:
+      type: object
+      description: Movie as returned by the Movie service
+      properties:
+        id:
+          type: string
+          example: "267eedb8-0f5d-42d5-8f43-72426b9fb3e6"
+        title:
+          type: string
+          example: Creed
+        rating:
+          type: number
+          example: 8.8
+        director:
+          type: string
+          example: Ryan Coogler
 
     Error:
       type: object

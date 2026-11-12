@@ -1,10 +1,13 @@
 from flask import Flask, request, jsonify, make_response
+import requests
 import json
 
 app = Flask(__name__)
 
 PORT = 3202
 HOST = '0.0.0.0'
+
+MOVIE_URL = "http://localhost:3200"
 
 with open('{}/databases/times.json'.format("."), "r") as jsf:
    schedule = json.load(jsf)["schedule"]
@@ -36,6 +39,23 @@ def get_date(date):
    if day is None:
       return make_response(jsonify({"error": "date not found"}), 404)
    return make_response(jsonify(day), 200)
+
+# les films d'une date avec leur detail (appel a Movie)
+@app.route("/schedule/<date>/details", methods=['GET'])
+def get_date_details(date):
+   day = find_date(date)
+   if day is None:
+      return make_response(jsonify({"error": "date not found"}), 404)
+
+   movies = []
+   for movieid in day["movies"]:
+      res = requests.get(f"{MOVIE_URL}/movies/{movieid}")
+      if res.status_code == 200:
+         movies.append(res.json())
+      else:
+         movies.append({"id": movieid})
+
+   return make_response(jsonify({"date": date, "movies": movies}), 200)
 
 # ajout d'une date, le corps contient la liste des films : {"movies": [...]}
 @app.route("/schedule/<date>", methods=['POST'])

@@ -1,10 +1,13 @@
 from flask import Flask, request, jsonify, make_response
+import requests
 import json
 
 app = Flask(__name__)
 
 PORT = 3203
 HOST = '0.0.0.0'
+
+BOOKING_URL = "http://localhost:3201"
 
 with open('{}/databases/users.json'.format("."), "r") as jsf:
    users = json.load(jsf)["users"]
@@ -41,6 +44,19 @@ def get_user(userid):
    if user is None:
       return make_response(jsonify({"error": "user not found"}), 404)
    return make_response(jsonify(user), 200)
+
+# l'utilisateur et ses reservations detaillees (appel a Booking, qui appelle Movie)
+@app.route("/users/<userid>/bookings", methods=['GET'])
+def get_user_bookings(userid):
+   user = find_user(userid)
+   if user is None:
+      return make_response(jsonify({"error": "user not found"}), 404)
+
+   res = requests.get(f"{BOOKING_URL}/bookings/{userid}/details")
+   # pas de reservation (404 de Booking) : liste vide
+   dates = res.json()["dates"] if res.status_code == 200 else []
+
+   return make_response(jsonify({"user": user, "bookings": dates}), 200)
 
 # creation d'un utilisateur, le corps contient name et last_active
 @app.route("/users/<userid>", methods=['POST'])
