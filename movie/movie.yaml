@@ -63,7 +63,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Movie"
-        "500":
+        "404":
           description: Movie ID not found
           content:
             application/json:
@@ -84,7 +84,7 @@ paths:
             schema:
               $ref: "#/components/schemas/Movie"
       responses:
-        "200":
+        "201":
           description: Movie added successfully
           content:
             application/json:
@@ -94,8 +94,29 @@ paths:
                   message:
                     type: string
                     example: movie added
-        "500":
+        "409":
           description: Movie ID already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    delete:
+      tags:
+        - admin
+      summary: Delete a movie
+      description: Deletes the movie and returns it.
+      parameters:
+        - $ref: "#/components/parameters/MovieId"
+      responses:
+        "200":
+          description: Movie deleted, the deleted movie is returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Movie"
+        "404":
+          description: Movie ID not found
           content:
             application/json:
               schema:
@@ -120,7 +141,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Movie"
-        "500":
+        "404":
           description: Movie title not found
           content:
             application/json:
@@ -139,7 +160,8 @@ paths:
           required: true
           description: New rating to assign to the movie
           schema:
-            type: string
+            type: number
+            example: 7.5
       responses:
         "200":
           description: Movie updated successfully
@@ -147,7 +169,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Movie"
-        "500":
+        "404":
           description: Movie ID not found
           content:
             application/json:
