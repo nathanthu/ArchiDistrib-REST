@@ -1,0 +1,154 @@
+openapi: 3.0.3
+info:
+  title: Schedule Service API
+  description: API to manage the days on which movies are shown in the cinema.
+  version: "1.0.0"
+servers:
+  - url: http://localhost:3202
+    description: Local development server
+
+tags:
+- name: admin
+  description: Secured Admin-only calls
+- name: dev
+  description: Operations available to regular developers
+
+paths:
+  /:
+    get:
+      tags:
+        - dev
+      summary: Service home page
+      responses:
+        "200":
+          description: HTML welcome message
+          content:
+            text/html:
+              schema:
+                type: string
+                example: "<h1 style='color:blue'>Welcome to the Showtime service!</h1>"
+
+  /schedule:
+    get:
+      tags:
+        - dev
+      summary: Retrieve the full schedule
+      responses:
+        "200":
+          description: List of all the days with their movies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Day"
+
+  /schedule/{date}:
+    get:
+      tags:
+        - dev
+      summary: Retrieve the movies shown on a date
+      parameters:
+        - $ref: "#/components/parameters/Date"
+      responses:
+        "200":
+          description: Date found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Day"
+        "404":
+          description: Date not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    post:
+      tags:
+        - admin
+      summary: Add a date to the schedule
+      parameters:
+        - $ref: "#/components/parameters/Date"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                movies:
+                  type: array
+                  items:
+                    type: string
+                  example: ["720d006c-3a57-4b6a-b18f-9b713b073f3c"]
+              required:
+                - movies
+      responses:
+        "201":
+          description: Date added, the new entry is returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Day"
+        "409":
+          description: Date already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    delete:
+      tags:
+        - admin
+      summary: Delete a date from the schedule
+      parameters:
+        - $ref: "#/components/parameters/Date"
+      responses:
+        "200":
+          description: Date deleted, the deleted entry is returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Day"
+        "404":
+          description: Date not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  parameters:
+    Date:
+      name: date
+      in: path
+      required: true
+      description: Date in the format YYYYMMDD
+      schema:
+        type: string
+        example: "20151201"
+
+  schemas:
+    Day:
+      type: object
+      properties:
+        date:
+          type: string
+          example: "20151201"
+        movies:
+          type: array
+          description: IDs of the movies shown on this date
+          items:
+            type: string
+          example: ["267eedb8-0f5d-42d5-8f43-72426b9fb3e6", "7daf7208-be4d-4944-a3ae-c1c2f516f3e6"]
+      required:
+        - date
+        - movies
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: date not found
