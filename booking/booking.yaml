@@ -1,0 +1,208 @@
+openapi: 3.0.3
+info:
+  title: Booking Service API
+  description: |
+    API to manage the bookings of the users.
+    It calls the User service to check users and the Schedule service to check that a movie is shown at the booked date.
+  version: "1.0.0"
+servers:
+  - url: http://localhost:3201
+    description: Local development server
+
+tags:
+- name: admin
+  description: Secured Admin-only calls
+- name: dev
+  description: Operations available to regular developers
+
+paths:
+  /:
+    get:
+      tags:
+        - dev
+      summary: Service home page
+      responses:
+        "200":
+          description: HTML welcome message
+          content:
+            text/html:
+              schema:
+                type: string
+                example: "<h1 style='color:blue'>Welcome to the Booking service!</h1>"
+
+  /bookings:
+    get:
+      tags:
+        - admin
+      summary: Retrieve all the bookings
+      description: Only an admin user can list all the bookings. The admin status is checked with the User service.
+      parameters:
+        - name: userid
+          in: query
+          required: true
+          description: ID of the user making the request, must be an admin
+          schema:
+            type: string
+            example: michael_scott
+      responses:
+        "200":
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+        "403":
+          description: The requester is not an admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /bookings/{userid}:
+    get:
+      tags:
+        - dev
+      summary: Retrieve the bookings of a user
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "200":
+          description: Bookings of the user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "404":
+          description: No booking for this user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    post:
+      tags:
+        - dev
+      summary: Add a booking for a user
+      description: The user must exist (User service) and the movie must be shown at this date (Schedule service).
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date:
+                  type: string
+                  example: "20151201"
+                movieid:
+                  type: string
+                  example: "267eedb8-0f5d-42d5-8f43-72426b9fb3e6"
+              required:
+                - date
+                - movieid
+      responses:
+        "201":
+          description: Booking added, all the bookings of the user are returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          description: The movie is not shown at this date
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Booking already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /bookings/{userid}/{date}/{movieid}:
+    delete:
+      tags:
+        - dev
+      summary: Delete a booking
+      description: Removes one movie booked at one date. The date is removed if no movie is left.
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "20151201"
+        - name: movieid
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "267eedb8-0f5d-42d5-8f43-72426b9fb3e6"
+      responses:
+        "200":
+          description: Booking deleted, the remaining bookings of the user are returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "404":
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  parameters:
+    UserId:
+      name: userid
+      in: path
+      required: true
+      description: Unique identifier of the user
+      schema:
+        type: string
+        example: chris_rivers
+
+  schemas:
+    Booking:
+      type: object
+      description: All the bookings of one user, grouped by date
+      properties:
+        userid:
+          type: string
+          example: chris_rivers
+        dates:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                example: "20151201"
+              movies:
+                type: array
+                items:
+                  type: string
+                example: ["267eedb8-0f5d-42d5-8f43-72426b9fb3e6"]
+      required:
+        - userid
+        - dates
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: booking not found
